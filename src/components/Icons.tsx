@@ -1,3 +1,6 @@
+"use client";
+
+
 interface IconProps {
   className?: string;
 }

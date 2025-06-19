@@ -7,6 +7,7 @@ interface TodoInputProps {
   onAddTodo: (text: string) => void;
 }
 
+
 export default function TodoInput({ onAddTodo }: TodoInputProps) {
   const [inputText, setInputText] = useState("");
   const [isComposing, setIsComposing] = useState(false);
