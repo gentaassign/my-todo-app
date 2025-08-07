@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Todo } from "@/types/todo";
-import { fetchTodos } from "@/lib/api";
+import { fetchTodos, createTodo, updateTodo, deleteTodo } from "@/lib/api";
 import TodoInput from "@/components/TodoInput";
 import TodoList from "@/components/TodoList";
 
@@ -29,29 +29,44 @@ export default function Home() {
     }
   };
 
-  const addTodo = (text: string) => {
+  // Todoの追加
+  const addTodo = async (text: string) => {
     if (text.trim() === "") return;
 
-    setTodos((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        text: text.trim(),
-        completed: false,
-      },
-    ]);
+    try {
+      const newTodo = await createTodo(text);
+      setTodos([newTodo, ...todos]);
+    } catch (err) {
+      setError("リマインダーの追加に失敗しました");
+      console.error("Failed to add todo:", err);
+    }
   };
 
-  const toggleTodo = (id: number) => {
-    setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      )
-    );
+  // Todoの完了状態を切り替え
+  const toggleTodo = async (id: number) => {
+    try {
+      const todo = todos.find((t) => t.id === id);
+      if (!todo) return;
+
+      const updatedTodo = await updateTodo(id, {
+        completed: !todo.completed,
+      });
+      setTodos(todos.map((t) => (t.id === id ? updatedTodo : t)));
+    } catch (err) {
+      setError("リマインダーの更新に失敗しました");
+      console.error("Failed to update todo:", err);
+    }
   };
 
-  const deleteTodo = (id: number) => {
-    setTodos((prev) => prev.filter((todo) => todo.id !== id));
+  // Todoの削除
+  const deleteTodoItem = async (id: number) => {
+    try {
+      await deleteTodo(id);
+      setTodos(todos.filter((t) => t.id !== id));
+    } catch (err) {
+      setError("リマインダーの削除に失敗しました");
+      console.error("Failed to delete todo:", err);
+    }
   };
 
   if (loading) {
@@ -69,9 +84,6 @@ export default function Home() {
           <h1 className="text-3xl font-bold text-black text-center">
             リマインダー
           </h1>
-            <p className="text-center text-gray-500 mt-2">
-          タスクの管理と整理を簡単に
-          </p>
         </div>
       </div>
 
@@ -92,7 +104,7 @@ export default function Home() {
         <TodoList
           todos={todos}
           onToggleTodo={toggleTodo}
-          onDeleteTodo={deleteTodo}
+          onDeleteTodo={deleteTodoItem}
         />
       </div>
 
@@ -106,8 +118,9 @@ export default function Home() {
  *
  * 1. 状態管理（useState）
  *    - todos: TODOリストの全てのアイテムを保存
+ *    - loading: データ取得中の状態を管理
+ *    - error: エラー発生時のメッセージを保存
  *    - 状態が変更されると自動的にUIが再レンダリングされる
- *    - Todo型の配列として管理
  *
  * 2. CRUD操作（Create, Read, Update, Delete）
  *    - addTodo: 新しいタスクを追加（Create）
@@ -135,3 +148,4 @@ export default function Home() {
  *    - シンプルで美しいUI
  *    - モバイルファーストアプローチ
  */
+
